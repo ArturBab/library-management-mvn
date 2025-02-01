@@ -2,7 +2,6 @@ package com.example.oop.oop_classes;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Scanner;
 
 import lombok.Getter;
 
@@ -19,17 +18,17 @@ public class Book {
     private String name, author;
     private int year;
 
-    private Scanner scan = new Scanner(System.in);
+    //private Scanner scan = new Scanner(System.in);
 
-    public static void createBook(Scanner scan) {
+    /* 
+    public void createBook(Scanner scan) {
         try {
             System.out.println("СОЗДАНИЕ КНИГИ ДЛЯ БИБЛИОТЕКИ.");
 
-            Book book = new Book();
             System.out.println("Введите название книги, автора и год издания:");
-            book.setName(scan.nextLine());
-            book.setAuthor(scan.nextLine());
-            book.setYear(scan.nextInt());
+            setName(scan.nextLine());
+            setAuthor(scan.nextLine());
+            setYear(scan.nextInt());
 
             System.out.println("КНИГА УСПЕШНО СОЗДАНА");
 
@@ -37,15 +36,16 @@ public class Book {
             System.out.println(e);
         }
     }
-
+    */
     public Book() {
         this.name = "unnamed";
         this.author = "unknown";
         this.year = 0;
     }
-
+    
     public Book(String name, String author, int year) throws BookException {
         BookException.validateName(name);
+        BookException.validateAuthor(author);
         BookException.validateYear(year);
         this.author = author;
         this.name = name;
@@ -58,6 +58,7 @@ public class Book {
     }
 
     public void setAuthor(String author) throws BookException {
+        BookException.validateAuthor(author);
         this.author = author;
     }
 
@@ -80,7 +81,8 @@ public class Book {
         private int errorCode;
 
         public static final int INVALID_NAME = 101;
-        public static final int INVALID_YEAR = 102;
+        public static final int INVALID_AUTHOR = 102;
+        public static final int INVALID_YEAR = 103;
         public static final int BOOK_NOT_FOUND = 201;
 
         public BookException(String message, int errorCode) {
@@ -92,6 +94,12 @@ public class Book {
         public static void validateName(String name) throws BookException {
             if (name == null || name.isBlank()) {
                 throw new BookException("Название книги не может быть пустым", INVALID_NAME);
+            }
+        }
+
+        public static void validateAuthor(String name) throws BookException {
+            if (name == null || name.isBlank()) {
+                throw new BookException("Название автора книги не может быть пустым", INVALID_AUTHOR);
             }
         }
 
