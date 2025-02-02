@@ -1,20 +1,9 @@
 package com.example.oop;
 
-
-import com.example.oop.oop_classes.Book;
-import com.example.oop.oop_classes.Library;
+import java.util.Scanner;
 
 public class App {
+    static Scanner scanner = new Scanner(System.in);
     public static void main(String[] args) {
-        try {
-            Library library = new Library();
-            library.createLibrary();
-            Book book = new Book("1", "2", 2025);
-            library.addBook(book);
-            library.listAllBooks();
-        } catch (Exception e) {
-            System.out.println(e);
-        }
     }
-  }
-
+}

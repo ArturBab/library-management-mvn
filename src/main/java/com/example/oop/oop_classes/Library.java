@@ -20,19 +20,20 @@ public class Library {
     @Getter
     private List<Book> books;
 
+    private final String directory = "data"; // Директория для хранения файла
+    private final String filePath = directory + "/library.csv"; // Путь к файлу
+    private final File file = new File(filePath); // Создаем уже файл
+
     public Library() {
         this.books = new ArrayList<Book>();
         System.out.println("Библиотека успешно создана.");
     }
 
     public void createLibrary() throws IOException {
-        String directory = "data"; // Папка для хранения файла
-        Files.createDirectories(Paths.get(directory)); // Создаём папку, если её нет
 
-        String filePath = directory + "/library.csv"; // Путь
-        File file = new File(filePath); // Создаем уже файл
+        Files.createDirectories(Paths.get(directory)); // Создаём директорию, если её нет
 
-        if (!file.exists()) { // Проверяем, есть ли файл
+        if (!file.exists()) { // Проверяем, есть ли файл (в контексте этого условия - не существует ли)
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
                 writer.write("ID;Название;Автор;Год\n"); // Записываем заголовки
             }
@@ -43,15 +44,38 @@ public class Library {
     }
 
     public void addBook(Book book) throws IOException {
-        getBooks().add(book);
-        createLibrary();
+        // Проверка, есть ли такая книга в файле
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            reader.readLine(); // Пропускаем заголовок
+            String line; // Строка
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(";");
+                if (data.length == 4) { // Убедимся, что строка содержит все данные
+                    String exNameString = data[1];
+                    String exAuthorString = data[2];
+                    int exYearInt = Integer.parseInt(data[3]);
 
+                    if (book.getName().equals(exNameString)
+                            && book.getAuthor().equals(exAuthorString)
+                            && book.getYear() == exYearInt) {
+
+                        System.out.println("Книга с названием \"" + book.getName() + "\" уже существует в библиотеке.");
+                        return; // Не добавит дубликат
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Ошибка при чтении файла: " + e.getMessage());
+        } catch (NumberFormatException ex) {
+            System.out.println("Ошибка преобразования числа: " + ex.getMessage());
+        }
+        // Если книга не найдена в файле, записываем её
         String csvLine = book.getId() + ";" + book.getName() + ";" + book.getAuthor() + ";" + book.getYear();
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("data/library.csv", true))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
             writer.write(csvLine);
             writer.newLine();
-            System.out.println("Книга с названием: " + book.getName() + "\n" + "БЫЛА УСПЕШНО ДОБАВЛЕНА В БИБЛИОТЕКУ.");
+            System.out.println("Книга \"" + book.getName() + "\" была успешно добавлена в библиотеку.");
         } catch (IOException e) {
             System.out.println("Ошибка при записи в CSV-файл: " + e.getMessage());
         }
@@ -68,12 +92,10 @@ public class Library {
     }
 
     public void listAllBooks() throws LibraryExcp, IOException {
-        LibraryExcp.checkLibraryNotEmpty(books);
-
+        LibraryExcp.checkLibraryNotEmpty(file);
         System.out.println("--- СПИСОК КНИГ ---");
         try (BufferedReader read = new BufferedReader(new FileReader("data/library.csv"))) {
             read.readLine(); // Пропускает строку. В этом случае заголовок.
-
             String line; // строка
             while ((line = read.readLine()) != null) {
                 String[] data = line.split(";"); // Разделяется по ";"
@@ -89,9 +111,9 @@ public class Library {
         System.out.println("--- ---");
     }
 
-    public void listBooksByAthor(String author) throws BookException, LibraryExcp {
+    public void listBooksByAuthor(String author) throws BookException, LibraryExcp, IOException {
         try {
-            LibraryExcp.checkLibraryNotEmpty(books);
+            LibraryExcp.checkLibraryNotEmpty(file);
             LibraryExcp.checkAuthor(author, books);
             for (Book book : books) {
                 if (book.getAuthor().equals(author)) {
@@ -116,9 +138,15 @@ public class Library {
             this.errorCode = errorCode;
         }
 
-        public static void checkLibraryNotEmpty(List<Book> books) throws LibraryExcp {
-            if (books.isEmpty()) {
-                throw new LibraryExcp("В библиотеке нет книг. Добавьте хотя бы одну книгу", INVALID_BOOKS);
+        public static void checkLibraryNotEmpty(File file) throws LibraryExcp, IOException {
+            if (!file.exists() || file.length() == 0) { // Если файла нет или он пуст
+                throw new LibraryExcp("Файл библиотеки отсутствует или пуст.", LibraryExcp.INVALID_BOOKS);
+            }
+            try (BufferedReader read = new BufferedReader(new FileReader("data/library.csv"))) {
+                read.readLine(); // Пропускаем заголовок
+                if (read.readLine() == null) { // Если нет ни одной книги
+                    throw new LibraryExcp("В библиотеке нет книг!", LibraryExcp.INVALID_BOOKS);
+                }
             }
         }
 
