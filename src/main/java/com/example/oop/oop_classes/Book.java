@@ -1,5 +1,9 @@
 package com.example.oop.oop_classes;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -10,39 +14,48 @@ public class Book {
 
     private static long counter = 0;
 
+    static { // Статический блок для загрузки ID при запуске программы
+        counter = loadMaxId();
+    }
+
     private long idCounter() {
-        return ++counter;
+        return ++counter; // Теперь ID корректно увеличивается
     }
 
     private final long id = idCounter();
     private String name, author;
     private int year;
 
-    //private Scanner scan = new Scanner(System.in);
+    public static long loadMaxId() { // Метод загрузки максимального ID
+        long maxId = 0;
+        File file = new File("data/library.csv");
 
-    /* 
-    public void createBook(Scanner scan) {
-        try {
-            System.out.println("СОЗДАНИЕ КНИГИ ДЛЯ БИБЛИОТЕКИ.");
-
-            System.out.println("Введите название книги, автора и год издания:");
-            setName(scan.nextLine());
-            setAuthor(scan.nextLine());
-            setYear(scan.nextInt());
-
-            System.out.println("КНИГА УСПЕШНО СОЗДАНА");
-
-        } catch (BookException e) {
-            System.out.println(e);
+        if (!file.exists()) {
+            return 0;
         }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            reader.readLine(); // Пропускаем заголовок
+            String line;
+            while ((line = reader.readLine()) != null) { // Читаем ВСЕ строки
+                String[] data = line.split(";");
+                if (data.length >= 1) {
+                    long id = Long.parseLong(data[0].trim());
+                    maxId = Math.max(maxId, id); // Находим максимальный ID
+                }
+            }
+        } catch (IOException | NumberFormatException e) {
+            System.out.println("Ошибка загрузки ID: " + e.getMessage());
+        }
+        return maxId; // Возвращаем последний ID
     }
-    */
+
     public Book() {
         this.name = "unnamed";
         this.author = "unknown";
         this.year = 0;
     }
-    
+
     public Book(String name, String author, int year) throws BookException {
         BookException.validateName(name);
         BookException.validateAuthor(author);
